@@ -40,9 +40,8 @@ bydate = activity %>%
     group_by(date) %>%
     summarise(N = n(), Total_steps = sum(steps, na.rm = TRUE))
 
-a <- ggplot(bydate, aes(x = Total_steps)) + geom_histogram(fill = "#A6CEE3", bins = 30, col = "#1F78B4") +
-    ggtitle("Total number of steps Taken each day")
-ggplotly(a)
+ggplot(bydate, aes(x = Total_steps)) + geom_histogram(fill = "#A6CEE3", bins = 30, col = "#1F78B4") + ggtitle("Total number of steps Taken each day")
+
 ```
 
 #### Mean and median number of steps taken each day
@@ -63,9 +62,8 @@ by_interval = activity %>%
     group_by(interval) %>%
     summarise(Mean_steps = mean(steps, na.rm = TRUE))
     
-b <- ggplot(by_interval, aes( x = interval, y = Mean_steps)) + geom_path() +
-    labs(x = "5-minute intervals", title = "Average of steps taken across 5-minutes interval")
-ggplotly(b)
+ggplot(by_interval, aes( x = interval, y = Mean_steps)) + geom_path() + labs(x = "5-minute intervals", title = "Average of steps taken across 5-minutes interval")
+
 ```
 
 #### These are the top 10 intervals for the average steps
@@ -115,9 +113,8 @@ by_date_new <- new_df %>%
     group_by(date) %>%
     summarise(N = n(), Total_steps = sum(steps, na.rm = TRUE))
 
-d <- ggplot(by_date_new, aes(x = Total_steps)) + geom_histogram(fill = "#A6CEE3", bins = 30, col = "#1F78B4") +
-    ggtitle("Total number of steps Taken each day", subtitle = "No missing data")
-ggplotly(d)
+ggplot(by_date_new, aes(x = Total_steps)) + geom_histogram(fill = "#A6CEE3", bins = 30, col = "#1F78B4") + ggtitle("Total number of steps Taken each day", subtitle = "No missing data")
+
 
 steps_summary_new <- by_date_new %>%
     summarise(Mean_steps = mean(Total_steps, na.rm = TRUE),
@@ -146,8 +143,7 @@ n = new_df %>%
     summarise(mean_score = mean(steps))
 
 ggplot(n, aes(x = interval, y = mean_score)) + geom_path() +
-    facet_wrap(~Week_part, nrow = 2) + ylab("Number of Steps") +
-    theme_light()
+    facet_wrap(~Week_part, nrow = 2) + ylab("Number of Steps") + theme_light()
 
 
 ```
