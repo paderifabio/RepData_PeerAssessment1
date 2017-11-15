@@ -1,25 +1,154 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+author: "Fabio Paderi"
+date: "2017-15-11"
 output: 
   html_document:
     keep_md: true
 ---
 
+### Set options
 
-## Loading and preprocessing the data
+```{r setoptions, echo = TRUE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      comment = NA)
+```
 
-
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
+### Load required packages
 
 
+```{r loadpackages, warning=FALSE, message=FALSE}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(knitr)
+library(plotly)
+```
 
-## Imputing missing values
+### Load the data
+
+```{r, warning=FALSE, message=FALSE}
+activity <- read.csv("activity.csv",header = TRUE)
+## transform in date
+activity$date <- ymd(activity$date)
+```
+
+### What is mean total number of steps taken per day?  
+#### Histogram of the total number of steps taken each day
+```{r, warning=FALSE, message=FALSE}
+bydate = activity %>%
+    group_by(date) %>%
+    summarise(N = n(), Total_steps = sum(steps, na.rm = TRUE))
+
+a <- ggplot(bydate, aes(x = Total_steps)) + geom_histogram(fill = "#A6CEE3", bins = 30, col = "#1F78B4") +
+    ggtitle("Total number of steps Taken each day")
+ggplotly(a)
+```
+
+#### Mean and median number of steps taken each day
+```{r, warning=FALSE, message=FALSE, comment=NA}
+steps_summary <- bydate %>%
+    summarise(Mean_steps = mean(Total_steps, na.rm = TRUE),
+              Median_steps = median(Total_steps, na.rm = TRUE))
+
+kable(steps_summary, align = 'l')
+
+```
+
+### What is the average daily activity pattern?  
+#### Time series plot of the average number of steps taken
+
+```{r}
+by_interval = activity %>%
+    group_by(interval) %>%
+    summarise(Mean_steps = mean(steps, na.rm = TRUE))
+    
+b <- ggplot(by_interval, aes( x = interval, y = Mean_steps)) + geom_path() +
+    labs(x = "5-minute intervals", title = "Average of steps taken across 5-minutes interval")
+ggplotly(b)
+```
+
+#### These are the top 10 intervals for the average steps
+```{r}
+knitr::kable(activity %>%
+    group_by(interval) %>%
+    summarise(Mean_steps = mean(steps, na.rm = TRUE)) %>%
+    group_by(interval) %>%
+    summarise(Average_steps = mean(Mean_steps)) %>%
+    arrange(desc(Average_steps)) %>%
+    head(10), align = 'l')
+```
+
+### Imputing missing values
+
+#### Code to describe and show a strategy for imputing missing data
+
+```{r}
+
+## Total number of Rows with missing values
+sum(apply(activity, 1, FUN = function(x) {sum(is.na(x))}))
+
+#### Replace missing values with the mean for the interval ####
+
+##create a merged dataset
+new_df <- merge(activity, by_interval, by = "interval")
+
+## substitute values
+new_df$steps[is.na(new_df$steps)] <-  new_df$Mean_steps[is.na(new_df$steps)] 
+
+new_df <- new_df %>%
+    arrange(date) %>%
+    select(steps, date, interval)
+
+new_df$steps <- round(new_df$steps, digits = 0)
+
+## the two datasets are equal but the new_df has no missing data
+kable(head(new_df, 10), align = 'l')
+kable(head(activity, 10), align = 'l')
+
+```
+
+#### Histogram of the total number of steps taken each day after missing values are imputed
+
+```{r}
+by_date_new <- new_df %>%
+    group_by(date) %>%
+    summarise(N = n(), Total_steps = sum(steps, na.rm = TRUE))
+
+d <- ggplot(by_date_new, aes(x = Total_steps)) + geom_histogram(fill = "#A6CEE3", bins = 30, col = "#1F78B4") +
+    ggtitle("Total number of steps Taken each day", subtitle = "No missing data")
+ggplotly(d)
+
+steps_summary_new <- by_date_new %>%
+    summarise(Mean_steps = mean(Total_steps, na.rm = TRUE),
+              Median_steps = median(Total_steps, na.rm = TRUE))
+
+kable(steps_summary_new, align = 'l')
+
+```
+
+Mean and Median are not the same. They have become higher, as expected.
+
+### Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+new_df$Weekday <- weekdays(new_df$date)
+new_df$Week_part <- ifelse(new_df$Weekday %in% c("Sabato", "Domenica"), "Weekend", "Weekday")
+head(new_df)
+
+```
+
+#### Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+```{r}
+n = new_df %>%
+    group_by(interval, Week_part) %>%
+    summarise(mean_score = mean(steps))
+
+ggplot(n, aes(x = interval, y = mean_score)) + geom_path() +
+    facet_wrap(~Week_part, nrow = 2) + ylab("Number of Steps") +
+    theme_light()
 
 
+```
 
-## Are there differences in activity patterns between weekdays and weekends?
